@@ -90,7 +90,7 @@ module Aliyun
 == 返回值:
 请求的图片的数据流
 =end
-    def get(path)
+    def get(path, &block)
       path = format_path(path)
       bucket_path = get_bucket_path(path)
       date = gmtdate
@@ -100,8 +100,9 @@ module Aliyun
         "Authorization" => sign("GET", bucket_path, "", "" ,date)
       }
       url = path_to_url(path)
-      response = RestClient.get(URI.encode(url), headers)
-      response.body
+      RestClient.get(URI.encode(url), headers).body.tap do |res|
+        yield res if block_given?
+      end
     end
 
 =begin rdoc
