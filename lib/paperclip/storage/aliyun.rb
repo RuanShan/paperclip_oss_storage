@@ -8,7 +8,7 @@ module Paperclip
 
       def flush_writes #:nodoc:
         @queued_for_write.each do |style_name, file|
-          oss_connection.put path(style_name), (File.new file.path)
+          oss_connection.put path(style_name), File.new( file.path ), oss_headers(file)
         end
 
         after_flush_writes
@@ -38,6 +38,16 @@ module Paperclip
 
       def oss_connection
         @oss_connection ||= ::Aliyun::Connection.new
+      end
+
+      def oss_headers file
+        { content_type: file.content_type }
+          .merge( @options[:aliyun_oss_headers] || {} )
+          .tap do |opts|
+            opts.each do |k, v|
+              opts[k] = v.respond_to?( :call ) ? v.call(file) : v
+            end
+          end
       end
     end
   end
