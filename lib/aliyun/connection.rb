@@ -39,21 +39,25 @@ module Aliyun
 图片的下载地址
 =end
     def put(path, file, options={})
-      path = format_path(path)
-      bucket_path = get_bucket_path(path)
-      content_md5 = Digest::MD5.file(file)
+
+      path         = format_path(path)
+      bucket_path  = get_bucket_path(path)
+      content_md5  = Digest::MD5.file(file)
       content_type = options[:content_type] || "image/jpg"
-      date = gmtdate
-      url = path_to_url(path)
-      auth_sign = sign("PUT", bucket_path, content_md5, content_type, date)
-      headers = {
-        "Authorization" => auth_sign,
-        "Content-Type" => content_type,
-        "Content-Length" => file.size,
-        "Date" => date,
-        "Host" => @aliyun_upload_host,
-        "Expect" => "100-Continue"
-      }
+      date         = gmtdate
+      url          = path_to_url(path)
+      auth_sign    = sign("PUT", bucket_path, content_md5, content_type, date)
+      headers      = options[:headers] || {}
+      
+      headers.merge!({
+        "Authorization"       => auth_sign,
+        "Content-Type"        => content_type,
+        "Content-Length"      => file.size,
+        "Date"                => date,
+        "Host"                => @aliyun_upload_host,
+        "Expect"              => "100-Continue"
+      })
+
       response = RestClient.put(URI.encode(url), file, headers)
       response.code == 200 ? path_to_url(path) : nil
     end
@@ -163,7 +167,7 @@ true/false
       canonicalized_oss_headers = ''
       canonicalized_resource = "/#{path}"
       string_to_sign = "#{verb}\n\n#{content_type}\n#{date}\n#{canonicalized_oss_headers}#{canonicalized_resource}"
-      digest = OpenSSL::Digest::Digest.new('sha1')
+      digest = OpenSSL::Digest.new('sha1')
       h = OpenSSL::HMAC.digest(digest, @aliyun_access_key, string_to_sign)
       h = Base64.encode64(h)
       "OSS #{@aliyun_access_id}:#{h}"
