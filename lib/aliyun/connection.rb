@@ -8,22 +8,14 @@ require 'uri'
 
 module Aliyun
   class Connection
+
+    attr_reader :options
+
     def initialize(options = Paperclip::Attachment.default_options[:aliyun])
-      @aliyun_access_id = options[:access_id]
+      @options           = options
+      @aliyun_access_id  = options[:access_id]
       @aliyun_access_key = options[:access_key]
-      @aliyun_bucket = options[:bucket]
-
-      data_centre = (options[:data_centre] || 'hangzhou').to_s.downcase
-      internal = options[:internal] == true ? true : false
-      @aliyun_data_centre = "cn-#{data_centre}#{internal ? '-internal' : nil}.oss.aliyuncs.com"
-
-      @aliyun_upload_host = "#{@aliyun_bucket}.#{@aliyun_data_centre}"
-
-      @aliyun_host = options[:host] || @aliyun_upload_host
-    end
-
-    def fetch_file_host
-      @aliyun_host
+      @aliyun_bucket     = options[:bucket]
     end
 
 =begin rdoc
@@ -54,7 +46,7 @@ module Aliyun
         "Content-Type"        => content_type,
         "Content-Length"      => file.size,
         "Date"                => date,
-        "Host"                => @aliyun_upload_host,
+        "Host"                => upload_host,
         "Expect"              => "100-Continue"
       })
 
@@ -76,7 +68,7 @@ module Aliyun
       bucket_path = get_bucket_path(path)
       date = gmtdate
       headers = {
-        "Host" => @aliyun_upload_host,
+        "Host" => upload_host,
         "Date" => date,
         "Authorization" => sign("DELETE", bucket_path, "", "" ,date)
       }
@@ -99,7 +91,7 @@ module Aliyun
       bucket_path = get_bucket_path(path)
       date = gmtdate
       headers = {
-        "Host" => @aliyun_upload_host,
+        "Host" => upload_host,
         "Date" => date,
         "Authorization" => sign("GET", bucket_path, "", "" ,date)
       }
@@ -123,7 +115,7 @@ true/false
       bucket_path = get_bucket_path(path)
       date = gmtdate
       headers = {
-        "Host" => @aliyun_upload_host,
+        "Host" => upload_host,
         "Date" => date,
         "Authorization" => sign("HEAD", bucket_path, "", "", date)
       }
@@ -163,14 +155,40 @@ true/false
     end
 
     private
-    def sign(verb, path, content_md5 = '', content_type = '', date)
-      canonicalized_oss_headers = ''
-      canonicalized_resource = "/#{path}"
-      string_to_sign = "#{verb}\n\n#{content_type}\n#{date}\n#{canonicalized_oss_headers}#{canonicalized_resource}"
-      digest = OpenSSL::Digest.new('sha1')
-      h = OpenSSL::HMAC.digest(digest, @aliyun_access_key, string_to_sign)
-      h = Base64.encode64(h)
-      "OSS #{@aliyun_access_id}:#{h}"
-    end
+
+      def fetch_file_host
+        view_host || upload_host
+      end
+
+      def view_host
+        options[:view_host]
+      end
+
+      def sign(verb, path, content_md5 = '', content_type = '', date)
+        canonicalized_oss_headers = ''
+        canonicalized_resource = "/#{path}"
+        string_to_sign = "#{verb}\n\n#{content_type}\n#{date}\n#{canonicalized_oss_headers}#{canonicalized_resource}"
+        digest = OpenSSL::Digest.new('sha1')
+        h = OpenSSL::HMAC.digest(digest, @aliyun_access_key, string_to_sign)
+        h = Base64.encode64(h)
+        "OSS #{@aliyun_access_id}:#{h}"
+      end
+
+      def upload_host
+        return @upload_host if defined? @upload_host
+        @upload_host = options[:upload_host] || default_host
+      end
+
+      def default_host
+        "cn-%s%s.oss.aliyuncs.com" % [data_centre, (internal? ? '-internal' : nil)]
+      end
+
+      def data_centre
+        (options[:data_centre] || 'hangzhou').to_s.downcase
+      end
+
+      def internal?
+        options[:internal]
+      end
   end
 end
