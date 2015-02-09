@@ -13,9 +13,9 @@ module Aliyun
       @aliyun_access_key = options[:access_key]
       @aliyun_bucket = options[:bucket]
 
-      data_centre = options[:data_centre].to_s.downcase == 'qingdao' ? 'qingdao' : 'hangzhou'
+      data_centre = (options[:data_centre] || 'hangzhou').to_s.downcase
       internal = options[:internal] == true ? true : false
-      @aliyun_data_centre = "oss-cn-#{data_centre}#{internal ? '-internal' : nil}.aliyuncs.com"
+      @aliyun_data_centre = "cn-#{data_centre}#{internal ? '-internal' : nil}.oss.aliyuncs.com"
 
       @aliyun_upload_host = "#{@aliyun_bucket}.#{@aliyun_data_centre}"
 
