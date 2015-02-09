@@ -91,7 +91,7 @@ module Aliyun
       bucket_path = get_bucket_path(path)
       date = gmtdate
       headers = {
-        "Host" => upload_host,
+        "Host" => fetch_file_host,
         "Date" => date,
         "Authorization" => sign("GET", bucket_path, "", "" ,date)
       }
@@ -119,7 +119,7 @@ true/false
         "Date" => date,
         "Authorization" => sign("HEAD", bucket_path, "", "", date)
       }
-      url = path_to_url(path)
+      url = path_to_url(path, host: upload_host)
 
       # rest_client will throw exception if requested resource not found
       begin
