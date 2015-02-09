@@ -37,7 +37,7 @@ module Aliyun
       content_md5  = Digest::MD5.file(file)
       content_type = options[:content_type] || "image/jpg"
       date         = gmtdate
-      url          = path_to_url(path)
+      url          = path_to_url(path, host: upload_host)
       auth_sign    = sign("PUT", bucket_path, content_md5, content_type, date)
       headers      = options[:headers] || {}
       
@@ -72,7 +72,7 @@ module Aliyun
         "Date" => date,
         "Authorization" => sign("DELETE", bucket_path, "", "" ,date)
       }
-      url = path_to_url(path)
+      url = path_to_url(path, host: upload_host)
       response = RestClient.delete(URI.encode(url), headers)
       response.code == 204 ? url : nil
     end
@@ -150,8 +150,8 @@ true/false
 
     ##
     # 根据配置返回完整的上传文件的访问地址
-    def path_to_url(path)
-      "http://#{fetch_file_host}/#{path}"
+    def path_to_url(path, host: fetch_file_host )
+      "http://#{host}/#{path}"
     end
 
     private
