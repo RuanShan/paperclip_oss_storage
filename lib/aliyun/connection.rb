@@ -40,7 +40,7 @@ module Aliyun
       url          = path_to_url(path, host: upload_host)
       auth_sign    = sign("PUT", bucket_path, content_md5, content_type, date)
       headers      = options[:headers] || {}
-      
+
       headers.merge!({
         "Authorization"       => auth_sign,
         "Content-Type"        => content_type,
@@ -180,7 +180,7 @@ true/false
       end
 
       def default_host
-        "cn-%s%s.oss.aliyuncs.com" % [data_centre, (internal? ? '-internal' : nil)]
+        "%s.cn-%s%s.oss.aliyuncs.com" % [@aliyun_bucket, data_centre, (internal? ? '-internal' : nil)]
       end
 
       def data_centre
