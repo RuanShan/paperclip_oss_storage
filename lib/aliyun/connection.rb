@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-require 'digest/hmac'
+require 'openssl' #hamc
 require 'digest/md5'
 require "rest-client"
 require "base64"
